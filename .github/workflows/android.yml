@@ -1,4 +1,4 @@
-name: Build Telegram Media Gallery
+name: Build La Clave Play
 on:
   workflow_dispatch:
   push:
@@ -23,6 +23,6 @@ jobs:
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: telegram-media-gallery-debug-apk
+          name: la-clave-play-open-catalogs-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
