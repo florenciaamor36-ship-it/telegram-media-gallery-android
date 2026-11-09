@@ -2,7 +2,7 @@ name: Build Telegram Media Gallery
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, "zapia/open-catalogs"]
 permissions:
   contents: read
 jobs:
