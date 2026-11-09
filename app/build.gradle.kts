@@ -1,1 +1,42 @@
-cGx1Z2lucyB7CiAgICBpZCgiY29tLmFuZHJvaWQuYXBwbGljYXRpb24iKQogICAgaWQoIm9yZy5qZXRicmFpbnMua290bGluLmFuZHJvaWQiKQogICAgaWQoIm9yZy5qZXRicmFpbnMua290bGluLnBsdWdpbi5jb21wb3NlIikKfQoKZnVuIHNlY3JldChuYW1lOiBTdHJpbmcpOiBTdHJpbmcgPSBTeXN0ZW0uZ2V0ZW52KG5hbWUpID86IHByb3ZpZGVycy5ncmFkbGVQcm9wZXJ0eShuYW1lKS5vck51bGwgPzogIiIKdmFsIGFwaUlkID0gc2VjcmV0KCJURUxFR1JBTV9BUElfSUQiKS50b0ludE9yTnVsbCgpID86IDAKdmFsIGFwaUhhc2ggPSBzZWNyZXQoIlRFTEVHUkFNX0FQSV9IQVNIIikKCmFuZHJvaWQgewogICAgbmFtZXNwYWNlID0gImNvbS5leGFtcGxlIgogICAgY29tcGlsZVNkayA9IDM1CiAgICBkZWZhdWx0Q29uZmlnIHsKICAgICAgICBhcHBsaWNhdGlvbklkID0gImFyLmNvbS5sYWNsYXZlLnRlbGVncmFtbWVkaWEiCiAgICAgICAgbWluU2RrID0gMjYKICAgICAgICB0YXJnZXRTZGsgPSAzNQogICAgICAgIHZlcnNpb25Db2RlID0gMQogICAgICAgIHZlcnNpb25OYW1lID0gIjAuMS4wIgogICAgICAgIGJ1aWxkQ29uZmlnRmllbGQoImludCIsICJURUxFR1JBTV9BUElfSUQiLCBhcGlJZC50b1N0cmluZygpKQogICAgICAgIGJ1aWxkQ29uZmlnRmllbGQoIlN0cmluZyIsICJURUxFR1JBTV9BUElfSEFTSCIsICJcIiR7YXBpSGFzaC5yZXBsYWNlKCJcXCIsICJcXFxcIikucmVwbGFjZSgiXCIiLCAiXFxcIiIpfVwiIikKICAgIH0KICAgIGJ1aWxkRmVhdHVyZXMgeyBjb21wb3NlID0gdHJ1ZTsgYnVpbGRDb25maWcgPSB0cnVlIH0KICAgIGNvbXBpbGVPcHRpb25zIHsgc291cmNlQ29tcGF0aWJpbGl0eSA9IEphdmFWZXJzaW9uLlZFUlNJT05fMTc7IHRhcmdldENvbXBhdGliaWxpdHkgPSBKYXZhVmVyc2lvbi5WRVJTSU9OXzE3IH0KICAgIGtvdGxpbk9wdGlvbnMgeyBqdm1UYXJnZXQgPSAiMTciIH0KICAgIHBhY2thZ2luZyB7IGpuaUxpYnMudXNlTGVnYWN5UGFja2FnaW5nID0gdHJ1ZSB9Cn0KCmRlcGVuZGVuY2llcyB7CiAgICB2YWwgY29tcG9zZUJvbSA9IHBsYXRmb3JtKCJhbmRyb2lkeC5jb21wb3NlOmNvbXBvc2UtYm9tOjIwMjQuMTIuMDEiKQogICAgaW1wbGVtZW50YXRpb24oY29tcG9zZUJvbSkKICAgIGltcGxlbWVudGF0aW9uKCJhbmRyb2lkeC5hY3Rpdml0eTphY3Rpdml0eS1jb21wb3NlOjEuMTAuMCIpCiAgICBpbXBsZW1lbnRhdGlvbigiYW5kcm9pZHgubGlmZWN5Y2xlOmxpZmVjeWNsZS12aWV3bW9kZWwtY29tcG9zZToyLjguNyIpCiAgICBpbXBsZW1lbnRhdGlvbigiYW5kcm9pZHgubGlmZWN5Y2xlOmxpZmVjeWNsZS1ydW50aW1lLWNvbXBvc2U6Mi44LjciKQogICAgaW1wbGVtZW50YXRpb24oImFuZHJvaWR4LmNvbXBvc2UubWF0ZXJpYWwzOm1hdGVyaWFsMyIpCiAgICBpbXBsZW1lbnRhdGlvbigiYW5kcm9pZHguY29tcG9zZS5tYXRlcmlhbDptYXRlcmlhbC1pY29ucy1leHRlbmRlZCIpCiAgICBpbXBsZW1lbnRhdGlvbigiYW5kcm9pZHguY29tcG9zZS51aTp1aSIpCiAgICBpbXBsZW1lbnRhdGlvbigiYW5kcm9pZHguY29tcG9zZS51aTp1aS10b29saW5nLXByZXZpZXciKQogICAgaW1wbGVtZW50YXRpb24oImlvLmNvaWwta3Q6Y29pbC1jb21wb3NlOjIuNy4wIikKICAgIGltcGxlbWVudGF0aW9uKCJpby5naXRodWIudGRsaWItYW5kcm9pZDpjb3JlOjAuMS4xIikKICAgIGRlYnVnSW1wbGVtZW50YXRpb24oImFuZHJvaWR4LmNvbXBvc2UudWk6dWktdG9vbGluZyIpCn0K
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+fun secret(name: String): String = System.getenv(name) ?: providers.gradleProperty(name).orNull ?: ""
+val apiId = secret("TELEGRAM_API_ID").toIntOrNull() ?: 0
+val apiHash = secret("TELEGRAM_API_HASH")
+
+android {
+    namespace = "com.example"
+    compileSdk = 35
+    defaultConfig {
+        applicationId = "ar.com.laclave.telegrammedia"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 1
+        versionName = "0.1.0"
+        buildConfigField("int", "TELEGRAM_API_ID", apiId.toString())
+        buildConfigField("String", "TELEGRAM_API_HASH", "\"${apiHash.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
+    }
+    buildFeatures { compose = true; buildConfig = true }
+    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    kotlinOptions { jvmTarget = "17" }
+    packaging { jniLibs.useLegacyPackaging = true }
+}
+
+dependencies {
+    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    implementation(composeBom)
+    implementation("androidx.activity:activity-compose:1.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.github.tdlib-android:core:0.1.1")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+}
