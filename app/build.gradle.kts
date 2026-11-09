@@ -17,6 +17,8 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        // APK liviana para teléfonos Android actuales.
+        ndk { abiFilters += listOf("arm64-v8a") }
         buildConfigField("int", "TELEGRAM_API_ID", apiId.toString())
         buildConfigField("String", "TELEGRAM_API_HASH", "\"${apiHash.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
     }
