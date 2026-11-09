@@ -18,9 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.example.tdlib.TdApi
+import org.drinkless.tdlib.TdApi
 import com.example.ui.TelegramGalleryViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val viewModel: TelegramGalleryViewModel by viewModels()
 

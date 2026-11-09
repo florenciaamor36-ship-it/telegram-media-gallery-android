@@ -47,10 +47,10 @@ class TelegramGalleryClient(context: Context) {
         p.systemLanguageCode = "es"; p.deviceModel = "Android"; p.systemVersion = android.os.Build.VERSION.RELEASE
         p.applicationVersion = BuildConfig.VERSION_NAME; p.databaseEncryptionKey = ByteArray(0)
         client.send(p) { }
-        client.send(TdApi.GetAuthorizationState()) { if (it is TdApi.UpdateAuthorizationState) authMutable.value = it.authorizationState }
+        client.send(TdApi.GetAuthorizationState()) { state -> if (state is TdApi.AuthorizationState) authMutable.value = state }
     }
 
-    fun submitPhone(phone: String) = client.send(TdApi.SetAuthenticationPhoneNumber(phone.trim(), TdApi.PhoneNumberAuthenticationSettings())) { }
+    fun submitPhone(phone: String) = client.send(TdApi.SetAuthenticationPhoneNumber(phone.trim(), TdApi.PhoneNumberAuthenticationSettings(false, false, false, false, false, null, null))) { }
     fun submitCode(code: String) = client.send(TdApi.CheckAuthenticationCode(code.trim())) { }
     fun submitPassword(password: String) = client.send(TdApi.CheckAuthenticationPassword(password)) { }
     fun logout() = client.send(TdApi.LogOut()) { }

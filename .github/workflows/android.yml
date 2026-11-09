@@ -11,34 +11,10 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: tdlib/td
-          path: td
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Install TDLib build prerequisites
-        run: sudo apt-get update && sudo apt-get install -y gperf php-cli perl
-      - name: Build official TDLib Android bundle
-        working-directory: td/example/android
-        run: |
-          set -euo pipefail
-          ./check-environment.sh
-          ./fetch-sdk.sh
-          ./build-openssl.sh
-          ./build-tdlib.sh
-      - name: Add generated official TDLib bindings and JNI libraries
-        run: |
-          set -euo pipefail
-          java_dir=$(find td/example/android/tdlib -type d -name java | head -1)
-          test -n "$java_dir"
-          mkdir -p app/src/main/java app/src/main/jniLibs
-          cp -R "$java_dir"/org app/src/main/java/
-          find td/example/android/tdlib -name '*.so' -exec sh -c 'for f do d="app/src/main/jniLibs/$(basename "$(dirname "$f")")"; mkdir -p "$d"; cp "$f" "$d/"; done' sh {} +
-          test -f app/src/main/java/org/drinkless/tdlib/Client.java
-          test -f app/src/main/jniLibs/arm64-v8a/libtdjni.so
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
         env:
