@@ -18,13 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.example.ui.TelegramGalleryViewModel
 import kotlinx.coroutines.launch
-import org.drinkless.tdlib.TdApi
 
 @Composable
 fun CatalogScreen(source: String) {
@@ -98,33 +95,5 @@ private fun PlayerPanel(item: CatalogItem, onClose: () -> Unit) {
                 TextButton(onClick = onClose) { Text("Cerrar") }
             }
         }
-    }
-}
-
-@Composable
-fun TelegramGalleryTab(viewModel: TelegramGalleryViewModel) {
-    val auth by viewModel.authState.collectAsStateWithLifecycle()
-    val selfId by viewModel.selfId.collectAsStateWithLifecycle()
-    val connected = selfId != null
-    val items by viewModel.items.collectAsStateWithLifecycle()
-    var phone by remember { mutableStateOf("") }; var code by remember { mutableStateOf("") }; var password by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf("Todo") }
-    LaunchedEffect(connected) { if (connected) viewModel.refresh() }
-    if (!connected) Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
-        Text("Telegram · tu galería", style = MaterialTheme.typography.headlineSmall)
-        Text("La sesión queda en este dispositivo. Esta pestaña conserva el alcance actual: Mensajes Guardados.")
-        when (auth) {
-            is TdApi.AuthorizationStateWaitCode -> { OutlinedTextField(code, { code = it }, label = { Text("Código de Telegram") }, modifier = Modifier.fillMaxWidth()); Button(onClick = { viewModel.code(code) }) { Text("Verificar") } }
-            is TdApi.AuthorizationStateWaitPassword -> { OutlinedTextField(password, { password = it }, label = { Text("Contraseña 2FA") }, modifier = Modifier.fillMaxWidth()); Button(onClick = { viewModel.password(password) }) { Text("Continuar") } }
-            else -> { OutlinedTextField(phone, { phone = it }, label = { Text("Teléfono con código de país") }, modifier = Modifier.fillMaxWidth()); Button(onClick = { viewModel.phone(phone) }) { Text("Iniciar sesión") } }
-        }
-    } else Column(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            listOf("Todo", "Fotos", "Videos").forEach { tab -> FilterChip(selected = filter == tab, onClick = { filter = tab }, label = { Text(tab) }, modifier = Modifier.padding(end = 4.dp)) }
-            TextButton(onClick = viewModel::refresh) { Text("Actualizar") }
-            TextButton(onClick = viewModel::logout) { Text("Salir") }
-        }
-        val visible = items.filter { filter == "Todo" || (filter == "Fotos" && it.kind == "Foto") || (filter == "Videos" && it.kind == "Video") }
-        LazyColumn { items(visible, key = { "${it.chatId}:${it.messageId}" }) { item -> ListItem(headlineContent = { Text(item.caption.ifBlank { item.kind }) }, supportingContent = { Text(item.kind) }) } }
     }
 }
