@@ -8,7 +8,7 @@ android {
     namespace = "com.example"
     compileSdk = 35
     defaultConfig {
-        applicationId = "ar.com.laclave.telegrammedia"
+        applicationId = "ar.com.laclave.play"
         minSdk = 26
         targetSdk = 35
         versionCode = 2
