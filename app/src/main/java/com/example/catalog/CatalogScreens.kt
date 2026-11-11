@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.launch
@@ -36,25 +38,26 @@ fun CatalogScreen(source: String) {
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text(if (isArchive) "Películas y videos" else "Videos con licencia abierta", style = MaterialTheme.typography.headlineSmall)
-        Text(if (isArchive) "Resultados públicos de Internet Archive. Revisá los derechos de cada obra." else "Wikimedia Commons · las licencias y atribuciones dependen de cada archivo.", style = MaterialTheme.typography.bodySmall)
+        Text(if (isArchive) "Solo se muestran videos con una licencia abierta identificada. Revisá la ficha antes de reutilizar." else "Wikimedia Commons · se muestran videos con licencia abierta identificada; revisá atribución y condiciones.", style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(), singleLine = true,
-            label = { Text("Buscar") }, trailingIcon = { IconButton(onClick = { /* Search button below handles submit */ }) { Icon(Icons.Default.Search, null) } })
+            label = { Text("Buscar") }, trailingIcon = { Icon(Icons.Default.Search, contentDescription = null) })
         Spacer(Modifier.height(8.dp))
         Button(onClick = {
             scope.launch {
-                loading = true; error = null; selected = null
+                loading = true; error = null; selected = null; results = emptyList()
                 runCatching { if (isArchive) CatalogRepository.searchInternetArchive(query) else CatalogRepository.searchWikimedia(query) }
-                    .onSuccess { results = it; if (it.isEmpty()) error = "No encontramos videos reproducibles para esa búsqueda." }
+                    .onSuccess {
+                        results = it
+                        if (it.isEmpty()) error = "No encontramos videos que tengan a la vez un formato reproducible y una licencia abierta identificada. Probá otra búsqueda."
+                    }
                     .onFailure { error = "No se pudo consultar el catálogo. Revisá tu conexión e intentá de nuevo." }
                 loading = false
             }
-        }, modifier = Modifier.fillMaxWidth()) { Text("Buscar en $source") }
+        }, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text("Buscar en $source") }
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 10.dp))
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 12.dp)) }
-        selected?.let { item ->
-            PlayerPanel(item = item, onClose = { selected = null })
-        }
+        selected?.let { item -> PlayerPanel(item = item, onClose = { selected = null }) }
         LazyColumn(contentPadding = PaddingValues(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(results, key = { it.id }) { item ->
                 ElevatedCard(Modifier.fillMaxWidth().clickable { selected = item }) {
@@ -68,7 +71,7 @@ fun CatalogScreen(source: String) {
                             Icon(Icons.Default.PlayArrow, contentDescription = null)
                             Text("Reproducir", modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
                             TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(item.sourceUrl))) }) {
-                                Icon(Icons.Default.OpenInBrowser, null); Text("Ficha")
+                                Icon(Icons.Default.OpenInBrowser, contentDescription = null); Text("Ficha")
                             }
                         }
                     }
@@ -81,13 +84,33 @@ fun CatalogScreen(source: String) {
 @Composable
 private fun PlayerPanel(item: CatalogItem, onClose: () -> Unit) {
     val context = LocalContext.current
+    var playbackError by remember(item.mediaUrl) { mutableStateOf<String?>(null) }
+    var isBuffering by remember(item.mediaUrl) { mutableStateOf(true) }
     val player = remember(item.mediaUrl) {
-        ExoPlayer.Builder(context).build().apply { setMediaItem(MediaItem.fromUri(item.mediaUrl)); prepare(); playWhenReady = true }
+        ExoPlayer.Builder(context).build().apply {
+            addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    isBuffering = playbackState == Player.STATE_BUFFERING || playbackState == Player.STATE_IDLE
+                    if (playbackState == Player.STATE_READY) playbackError = null
+                }
+                override fun onPlayerError(error: PlaybackException) {
+                    isBuffering = false
+                    playbackError = "No se pudo reproducir este archivo (${error.errorCodeName}). Puede usar un códec no compatible o haber sido retirado. Probá otro video o abrí la ficha original."
+                }
+            })
+            setMediaItem(MediaItem.fromUri(item.mediaUrl))
+            prepare()
+            playWhenReady = true
+        }
     }
     DisposableEffect(player) { onDispose { player.release() } }
     ElevatedCard(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Column {
-            AndroidView(factory = { ctx -> PlayerView(ctx).apply { this.player = player; useController = true } }, modifier = Modifier.fillMaxWidth().height(220.dp))
+            Box {
+                AndroidView(factory = { ctx -> PlayerView(ctx).apply { this.player = player; useController = true } }, modifier = Modifier.fillMaxWidth().height(220.dp))
+                if (isBuffering && playbackError == null) CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+            playbackError?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) }
             Text(item.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
             Text("Fuente: ${item.sourceName} · ${item.rights}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
