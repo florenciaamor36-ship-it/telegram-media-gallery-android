@@ -7,12 +7,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.Locale
+import java.text.Normalizer
 
 /** Public-catalog adapters. Only items with explicit, supported reuse terms enter the playable list. */
 object CatalogRepository {
     suspend fun searchInternetArchive(query: String): List<CatalogItem> = withContext(Dispatchers.IO) {
-        val q = if (query.isBlank()) "mediatype:movies" else "mediatype:movies AND (${query.trim()})"
-        val url = "https://archive.org/advancedsearch.php?q=${enc(q)}&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&rows=12&page=1&output=json"
+        val titleTerms = query.lowercase(Locale.ROOT).split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 && it !in setOf("the", "and", "for", "with", "from", "una", "uno", "los", "las", "del", "de", "la", "el", "en", "y") }
+        val titleQuery = titleTerms.joinToString(" AND ") { "title:$it" }
+        val q = if (titleQuery.isBlank()) "mediatype:movies" else "mediatype:movies AND $titleQuery"
+        val url = "https://archive.org/advancedsearch.php?q=${enc(q)}&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&rows=30&page=1&output=json"
         val root = JSONObject(get(url))
         val docs = root.optJSONObject("response")?.optJSONArray("docs") ?: return@withContext emptyList()
         buildList {
@@ -38,10 +41,13 @@ object CatalogRepository {
                     }
                 }
                 val playable = mediaUrl ?: continue
+                val title = doc.optString("title", id)
+                if (!matchesTitle(title, query)) continue
                 add(CatalogItem(
-                    id = "ia:$id", title = doc.optString("title", id), creator = doc.optString("creator"), year = doc.optString("year"),
+                    id = "ia:$id", title = title, creator = doc.optString("creator"), year = doc.optString("year"),
                     description = doc.optString("description").take(500), mediaUrl = playable,
-                    sourceName = "Internet Archive", sourceUrl = "https://archive.org/details/${enc(id)}", rights = license
+                    sourceName = "Internet Archive", sourceUrl = "https://archive.org/details/${enc(id)}", rights = license,
+                    posterUrl = "https://archive.org/services/img/${enc(id)}"
                 ))
             }
         }
@@ -49,7 +55,7 @@ object CatalogRepository {
 
     suspend fun searchWikimedia(query: String): List<CatalogItem> = withContext(Dispatchers.IO) {
         val search = (query.trim().ifBlank { "public domain film" }) + " filetype:video"
-        val url = "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${enc(search)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url%7Cextmetadata&format=json&origin=*"
+        val url = "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${enc(search)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=640&format=json&origin=*"
         val root = JSONObject(get(url))
         val pages = root.optJSONObject("query")?.optJSONObject("pages") ?: return@withContext emptyList()
         buildList {
@@ -67,12 +73,14 @@ object CatalogRepository {
                 val usageTerms = meta("UsageTerms")
                 val license = supportedLicense(licenseUrl, "$shortLicense $usageTerms") ?: continue
                 val title = page.optString("title").removePrefix("File:")
+                if (!matchesTitle(title, query)) continue
                 val pageTitle = page.optString("title").replace(' ', '_')
                 val pageUrl = "https://commons.wikimedia.org/wiki/${enc(pageTitle)}"
                 add(CatalogItem(
                     id = "commons:${page.optString("pageid")}", title = title, creator = meta("Artist"), year = "",
                     description = "Video de Wikimedia Commons. Revisá la atribución y condiciones en la ficha.", mediaUrl = media,
-                    sourceName = "Wikimedia Commons", sourceUrl = pageUrl, rights = license
+                    sourceName = "Wikimedia Commons", sourceUrl = pageUrl, rights = license,
+                    posterUrl = info.optString("thumburl").takeIf(String::isNotBlank) ?: media
                 ))
             }
         }
@@ -105,6 +113,16 @@ object CatalogRepository {
             connection.disconnect()
         }
     }
+    private fun matchesTitle(title: String, query: String): Boolean {
+        if (query.isBlank()) return true
+        val ignored = setOf("the", "and", "for", "with", "from", "una", "uno", "los", "las", "del", "de", "la", "el", "en", "y")
+        fun words(value: String) = Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "").split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 && it !in ignored }
+        val terms = words(query).toSet()
+        if (terms.isEmpty()) return true
+        return words(title).toSet().containsAll(terms)
+    }
+
     private fun enc(value: String) = URLEncoder.encode(value, "UTF-8")
     private fun encPath(value: String) = value.split('/').joinToString("/") { enc(it).replace("+", "%20") }
 }
@@ -112,5 +130,5 @@ object CatalogRepository {
 data class CatalogItem(
     val id: String, val title: String, val creator: String, val year: String,
     val description: String, val mediaUrl: String, val sourceName: String,
-    val sourceUrl: String, val rights: String
+    val sourceUrl: String, val rights: String, val posterUrl: String
 )
