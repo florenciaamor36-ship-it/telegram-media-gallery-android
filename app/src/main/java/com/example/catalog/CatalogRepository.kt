@@ -115,12 +115,15 @@ object CatalogRepository {
     }
     private fun matchesTitle(title: String, query: String): Boolean {
         if (query.isBlank()) return true
-        val ignored = setOf("the", "and", "for", "with", "from", "una", "uno", "los", "las", "del", "de", "la", "el", "en", "y")
-        fun words(value: String) = Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFD)
-            .replace(Regex("\\p{Mn}+"), "").split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 && it !in ignored }
-        val terms = words(query).toSet()
-        if (terms.isEmpty()) return true
-        return words(title).toSet().containsAll(terms)
+        fun normalized(value: String) = Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "")
+            .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+            .trim()
+            .replace(Regex("\\s+"), " ")
+        val phrase = normalized(query)
+        if (phrase.isBlank()) return true
+        val normalizedTitle = " ${normalized(title)} "
+        return normalizedTitle.contains(" $phrase ")
     }
 
     private fun enc(value: String) = URLEncoder.encode(value, "UTF-8")
