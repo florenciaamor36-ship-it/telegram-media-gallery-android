@@ -11,10 +11,10 @@ import java.text.Normalizer
 
 /** Public-catalog adapters. Only items with explicit, supported reuse terms enter the playable list. */
 object CatalogRepository {
-    suspend fun searchInternetArchive(query: String): List<CatalogItem> = withContext(Dispatchers.IO) {
+    suspend fun searchInternetArchive(query: String, categoryBrowse: Boolean = false) = withContext(Dispatchers.IO) {
         val titleTerms = query.lowercase(Locale.ROOT).split(Regex("[^\\p{L}\\p{N}]+")).filter { it.length >= 3 && it !in setOf("the", "and", "for", "with", "from", "una", "uno", "los", "las", "del", "de", "la", "el", "en", "y") }
         val titleQuery = titleTerms.joinToString(" AND ") { "title:$it" }
-        val q = if (titleQuery.isBlank()) "mediatype:movies" else "mediatype:movies AND $titleQuery"
+        val q = if (categoryBrowse || titleQuery.isBlank()) "mediatype:movies" else "mediatype:movies AND $titleQuery"
         val url = "https://archive.org/advancedsearch.php?q=${enc(q)}&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&rows=30&page=1&output=json"
         val root = JSONObject(get(url))
         val docs = root.optJSONObject("response")?.optJSONArray("docs") ?: return@withContext emptyList()
@@ -42,7 +42,7 @@ object CatalogRepository {
                 }
                 val playable = mediaUrl ?: continue
                 val title = doc.optString("title", id)
-                if (!matchesTitle(title, query)) continue
+                if (if (categoryBrowse) !matchesCategory(title, query) else !matchesTitle(title, query)) continue
                 add(CatalogItem(
                     id = "ia:$id", title = title, creator = doc.optString("creator"), year = doc.optString("year"),
                     description = doc.optString("description").take(500), mediaUrl = playable,
@@ -53,8 +53,8 @@ object CatalogRepository {
         }
     }
 
-    suspend fun searchWikimedia(query: String): List<CatalogItem> = withContext(Dispatchers.IO) {
-        val search = (query.trim().ifBlank { "public domain film" }) + " filetype:video"
+    suspend fun searchWikimedia(query: String, categoryBrowse: Boolean = false): List<CatalogItem> = withContext(Dispatchers.IO) {
+        val search = (query.trim().ifBlank { if (categoryBrowse) "public domain silent film" else "public domain film" }) + " filetype:video"
         val url = "https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${enc(search)}&gsrnamespace=6&gsrlimit=30&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=640&format=json&origin=*"
         val root = JSONObject(get(url))
         val pages = root.optJSONObject("query")?.optJSONObject("pages") ?: return@withContext emptyList()
@@ -73,7 +73,7 @@ object CatalogRepository {
                 val usageTerms = meta("UsageTerms")
                 val license = supportedLicense(licenseUrl, "$shortLicense $usageTerms") ?: continue
                 val title = page.optString("title").removePrefix("File:")
-                if (!matchesTitle(title, query)) continue
+                if (if (categoryBrowse) !matchesCategory(title, query) else !matchesTitle(title, query)) continue
                 val pageTitle = page.optString("title").replace(' ', '_')
                 val pageUrl = "https://commons.wikimedia.org/wiki/${enc(pageTitle)}"
                 add(CatalogItem(
@@ -113,6 +113,17 @@ object CatalogRepository {
             connection.disconnect()
         }
     }
+    private fun matchesCategory(title: String, category: String): Boolean {
+        val value = title.lowercase(Locale.ROOT)
+        val terms = when (category.lowercase(Locale.ROOT)) {
+            "classic films" -> listOf("silent", "192", "193", "194", "195", "classic", "public domain", "charlie chaplin", "buster keaton", "metropolis")
+            "animated films" -> listOf("animation", "animated", "cartoon", "animat", "puppet film")
+            "short films" -> listOf("short film", "short films", "one-reel", "short silent")
+            else -> emptyList()
+        }
+        return terms.any(value::contains)
+    }
+
     private fun matchesTitle(title: String, query: String): Boolean {
         if (query.isBlank()) return true
         fun normalized(value: String) = Normalizer.normalize(value.lowercase(Locale.ROOT), Normalizer.Form.NFD)
