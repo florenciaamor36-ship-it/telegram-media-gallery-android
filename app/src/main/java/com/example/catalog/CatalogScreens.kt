@@ -53,7 +53,7 @@ fun CatalogScreen(source: String) {
         activeCategory = category
         scope.launch {
             loading = true; error = null; selected = null; results = emptyList()
-            runCatching { if (isArchive) CatalogRepository.searchInternetArchive(term) else CatalogRepository.searchWikimedia(term) }
+            runCatching { if (isArchive) CatalogRepository.searchInternetArchive(term, categoryBrowse = category.isNotBlank()) else CatalogRepository.searchWikimedia(term, categoryBrowse = category.isNotBlank()) }
                 .onSuccess {
                     results = it
                     if (it.isEmpty()) error = "No encontramos coincidencias exactas con licencia abierta. Probá otro título o categoría."
@@ -63,7 +63,7 @@ fun CatalogScreen(source: String) {
         }
     }
 
-    val categories = listOf("Clásicos" to "classic film", "Animación" to "animated film", "Documentales" to "documentary film", "Cortos" to "short film")
+    val categories = listOf("Clásicos" to "Classic films", "Animación" to "Animated films", "Cortos" to "Short films")
     Column(Modifier.fillMaxSize().background(PlayBg)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 14.dp)) {
             Text("LA CLAVE PLAY", color = PlayGold, style = MaterialTheme.typography.labelLarge)
